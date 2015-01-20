@@ -1,0 +1,198 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+
+<div class="jumbotron">
+    <p>What is currently going on?</p>
+</div>
+
+<div class="row">
+    <div class="col-sm-4">
+        <h2>Wait list <span class="small">current wait time: 55mins</span></h2>
+        <div id="listView"></div>
+        <div class="draggable"></div>
+        <div class="draggable"></div>
+    </div>
+    <div class="col-sm-8">
+        <h2>Seating</h2>
+        <div class="pull-left" style="margin-right: 10px">
+            <div class="k-header droptarget">Table A1</div>
+            <div class="k-header droptarget">Table A2</div>
+            <div class="k-header droptarget">Table A3</div>
+            <div class="k-header droptarget">Table A4</div>
+        </div>
+        <div class="pull-left">
+            <div class="k-header droptarget">Table A5</div>
+            <div class="k-header droptarget">Table A6</div>
+            <div class="k-header droptarget">Table A7</div>
+            <div class="k-header droptarget">Table A8</div>
+        </div>
+        <div class="pull-left" style="margin: 0 20px;">
+            <div class="k-header bar">Main Bar</div>
+            <div>
+                <div class="k-header droptarget pull-left">Table B1</div>
+                <div class="k-header droptarget pull-left">Table B2</div>
+            </div>
+        </div>
+        <div class="pull-left" style="margin-right: 10px">
+            <div class="k-header droptarget">Table B1</div>
+            <div class="k-header droptarget">Table B2</div>
+            <div class="k-header droptarget">Table B3</div>
+            <div class="k-header droptarget">Table B4</div>
+        </div>
+        <div class="pull-left">
+            <div class="k-header droptarget">Table B5</div>
+            <div class="k-header droptarget">Table B6</div>
+            <div class="k-header droptarget">Table B7</div>
+            <div class="k-header droptarget">Table B8</div>
+        </div>
+    </div>
+    <script type="text/x-kendo-tmpl" id="template">
+        <div class="draggable">
+            <div class="pull-left">
+                <img class="img-rounded" src="#:user.picture.thumbnail#" alt="" />
+            </div>
+            <div class="pull-left user">
+                <h3>#:user.name.last#, #:user.name.first#</h3>
+                <h5>#:user.email#</h5>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+    </script>
+    <script>
+        function draggableOnDragStart(e) {
+            e.currentTarget.addClass("hollow");
+            //$(".droptarget").text("Drop here.");
+            $(".droptarget").removeClass("painted");
+        }
+
+        function droptargetOnDragEnter(e) {
+            //e.dropTarget.text("Now drop...");
+            e.dropTarget.addClass("painted");
+        }
+
+        function droptargetOnDragLeave(e) {
+            //e.dropTarget.text("Drop here.");
+            e.dropTarget.removeClass("painted");
+        }
+
+        function droptargetOnDrop(e) {
+            e.dropTarget.removeClass("hollow");
+            e.dropTarget.html(e.draggable.currentTarget.html());
+        }
+
+        function draggableOnDragEnd(e) {
+            e.currentTarget.removeClass("hollow");
+            if (e.sender.dropped)
+                e.currentTarget.remove();
+        }
+
+        $(document).ready(function () {
+            var dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: "http://api.randomuser.me/?results=5",
+                        dataType: "json"
+                    }
+                },
+                schema: {
+                    data: "results"
+                },
+            });
+
+            $("#listView").kendoListView({
+                dataSource: dataSource,
+                //selectable: "single",
+                dataBound: onDataBound,
+                change: onChange,
+                template: kendo.template($("#template").html())
+            });
+
+            function onDataBound() {
+                console.log("ListView data bound");
+            }
+
+            function onChange() {
+                var data = dataSource.view(),
+                    selected = $.map(this.select(), function (item) {
+                        return data[$(item).index()].user.name.first;
+                    });
+
+                console.log("Selected: " + selected.length + " item(s), [" + selected.join(", ") + "]");
+            }
+
+            $("#listView").kendoDraggable({
+                filter: ".draggable",
+                hint: function (element) {
+                    return element.clone();
+                },
+                dragstart: draggableOnDragStart,
+                dragend: draggableOnDragEnd
+            });
+
+            $(".droptarget").kendoDropTarget({
+                dragenter: droptargetOnDragEnter,
+                dragleave: droptargetOnDragLeave,
+                drop: droptargetOnDrop
+            });
+        });
+    </script>
+
+    <style scoped>
+        .bar {
+            height: 320px;
+            width: 200px;
+        }
+
+        .droptarget, .bar {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .draggable {
+            cursor: move;
+            /*width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: #03a9f4;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.23), 0 3px 10px rgba(0, 0, 0, 0.16);*/
+        }
+
+        .painted {
+            background-color: #03a9f4;
+            color: #fff;
+        }
+
+        .draggable.hollow {
+            cursor: default;
+            background: #ececec;
+        }
+
+        .droptarget img {
+            height: 40px;
+            width: 40px;
+            margin-right: 5px;
+        }
+
+        .droptarget h3 {
+            font-size: 80%;
+        }
+
+        .droptarget h5 {
+            display: none;
+        }
+
+        .draggable div {
+            padding: 5px;
+        }
+
+        .droptarget {
+            height: 100px;
+            width: 100px;
+            font-size: 14px;
+            
+            cursor: default;
+            border: 1px solid #999;
+        }
+    </style>
+</div>
